@@ -121,6 +121,7 @@ function create()
   keys.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
   keys.q = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
   keys.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  keys.enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
   //Création des groupes de plateformes  et de flèches
   platforms = this.physics.add.staticGroup();
@@ -160,10 +161,11 @@ function create()
   player.setCollideWorldBounds(true);
   this.physics.add.collider(player, platforms);
 
+  //Mise en place du portrait de personnage et de l'icone de frags
   uiP = this.add.sprite(50, 50, 'portrait');
   uiS = this.add.sprite(170, 50, 'skullicon');
 
-  dgts = this.sound.add('hurt');
+  dgts = this.sound.add('hurt'); //Son de prise de dégât
 
 
 //------------------------------------------------------------------------------
@@ -201,7 +203,7 @@ function create()
 
   //generateEnemy();
 
-    var timer = scene.time.addEvent({
+    var timer = scene.time.addEvent({ //Intervalle d'apparitions des squelettesz
     delay: 1200,
     callback: generateEnemy,
     callbackScope: scene,
@@ -214,7 +216,7 @@ function create()
   {
     if (pause == false)
     {
-      const xCoordinate = Math.random() * 1520;
+      const xCoordinate = Math.random() * 1520;   //Apparition aléatoire sur l'axe X
       let new_flying = ennemisvol.create(xCoordinate, 10, '');
       //let new_flying = ennemisvol.create(10, 220, 'skelyidle');
       new_flying.anims.play('skelyidle', true);
@@ -224,14 +226,14 @@ function create()
 
   }
 
-  var timer = scene.time.addEvent({
+  var timer = scene.time.addEvent({ //Intervalle entre les apparition des monstres volants
   delay: 1500,
   callback: generateFlying,
   callbackScope: scene,
   loop: true
 });
 
-  potions = this.physics.add.group();
+  potions = this.physics.add.group(); //Creation du groupe des potions
 
 //------------------------------------------------------------------------------
 //Animations du personnage
@@ -334,7 +336,7 @@ function create()
 
 //------------------------------------------------------------------------------
 //Timer Implantation
-      zeTimer = this.time.addEvent({
+      zeTimer = this.time.addEvent({  //Incrément du timer
       delay: 1000,
       callback: plusUn,
       callbackScope: this,
@@ -425,7 +427,7 @@ function huntressdamage(player, enemies)
     }
 
     var bumpTemps = scene.time.addEvent({ //Fenêtre permettant au personnage d'être projeter après une touche
-        delay: 250,                // ms
+        delay: 250,
         callback: bump,
         callbackScope: scene,
         loop: false
@@ -443,7 +445,7 @@ function huntressdamage(player, enemies)
       console.log(scoreFinal);
     }
 
-    vulnerability = false;
+    vulnerability = false; //Modification du statut de vulnérabilité
 
     vulnerabilityInit();
   }else if (vulnerability == false)
@@ -494,7 +496,7 @@ function applyPotion(player, potions)
   if(vie < 10)
   {
     vie = vie + 2;
-    potions.destroy(true);
+    potions.destroy(true); //Destruction de la potion au contacte
   }
   if(vie >10)
   {
@@ -511,15 +513,15 @@ function scoreCalculation()
   scoreFinal += score;
   console.log(scoreFinal);
 
-  var timer = scene.time.addEvent({
-      delay: 1500,                // ms
+  var timer = scene.time.addEvent({ //Perdiode de temps avant l'apaprition du score à l'écran
+      delay: 1500,
       callback: displayScore,
       callbackScope: scene,
       loop: false
   });
 }
 
-//Affichage des scores
+//Affichage des scores et modification des zones de textes de base
 function displayScore()
 {
   timerText.destroy(true);
@@ -540,23 +542,29 @@ function displayScore()
   fontSize: "24px",
   fill: "#FFFFFF"
   });
+
+  var restartMessage = this.add.text(500, 200, "Appuyer sur ENTER pour relancer le niveau", {
+  fontSize: "24px",
+  fill: "#008000"
+  });
 }
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 function update()
 {
+  //Gestion des déplacement du personnage
   if (keys.d.isDown && pause == false)
   {
     player.setVelocityX(160);
 
     if(player.body.touching.down)
     {
-      player.anims.play('run', true);
+      player.anims.play('run', true); //Animation de marche
     }
     else
     {
-      player.anims.play('fall', true);
+      player.anims.play('fall', true); //Animation de chute
     }
     turn = false;
   }
@@ -595,13 +603,12 @@ function update()
 //Apparition / tir de flèche
   while (game.input.activePointer.isDown && cadence==0 && pause == false)
     {
-        //fire();
         console.log("Pew pew");
         if(turn == false)
         {
           arrow = this.physics.add.sprite(player.x, player.y, 'arrow');
           arrow.body.setVelocityX(3000);
-          arrow.body.setVelocityY(-80);
+          arrow.body.setVelocityY(-80); //Compensation de la gravité pour une meilleure portée de tir
           arrow.setCollideWorldBounds(true);
           cadence = 1;
         }else if(turn == true)
@@ -647,7 +654,11 @@ function update()
 
   if(pause == true)
   {
+    //Evènement de fin de partie
+    //Destruction de tout les assets, remise à 0 des variables pour un nouveau lancement
     zeTimer.remove();
+
+    this.game.sound.stopAll();
 
     back.getChildren().forEach(function (back)
     {
@@ -674,7 +685,7 @@ function update()
         potions.destroy(true);
     });
 
-    uiP.x = -100;
+    uiP.x = -100;   //Déplacmeent de icônes et portrait hors cadre
     uiS.x = -100;
 
     this.barre.destroy(true);
@@ -682,6 +693,17 @@ function update()
     scene.physics.pause();
 
     shieldFeedback.destroy(true);
+
+    if (keys.enter.isDown)
+    {
+      //Reinitialisation pour une nouvelle run
+      pause = false;
+      vie = 10;
+      score = 0;
+      potionCount = 0;
+      timerVal = 0;
+      this.scene.restart();
+    }
 
   }
 
@@ -712,7 +734,7 @@ function update()
     }
 
   });*/
-
+  //Déplacment horizontale des ennemis volants
   ennemisvol.getChildren().forEach(function (ennemisvol) {
     if (player.x < ennemisvol.x)
     {
@@ -725,7 +747,7 @@ function update()
     }
 
   });
-
+  //Déplacment verticale des ennemis volants
   ennemisvol.getChildren().forEach(function (ennemisvol) {
     if (player.y < ennemisvol.y)
     {
@@ -744,15 +766,11 @@ function update()
 
     const size = -100;
 
-    this.barre.fillStyle(0x2d2d2d);
+    this.barre.fillStyle(0x2d2d2d); //Barre noir de fond
     this.barre.fillRect(100, 100, 25, size);
 
     this.barre.fillStyle(0xcc0000);
-    this.barre.fillRect(100, 100, 25, vie*-10);
+    this.barre.fillRect(100, 100, 25, vie*-10); //Barre rouge des PVs
 
-/*  if(vulnerability == false)
-  {
-    player.setBounceX(0);
-  }*/
 
 }
